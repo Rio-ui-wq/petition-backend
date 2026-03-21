@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 require("dotenv").config();
 
@@ -12,15 +12,7 @@ app.use(express.json());
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS
-  }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // 部署とメールアドレスのマッピング
 const departments = {
@@ -67,9 +59,9 @@ app.post("/petition", async (req, res) => {
     const category = analysis.isInappropriate ? "要確認" : analysis.category;
     const toEmail = process.env.MAIL_USER;
 
-    await transporter.sendMail({
-      from: process.env.MAIL_USER,
-      to: toEmail,
+    await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: process.env.MAIL_USER,
       subject: `【嘆願】${title}`,
       text: `
             カテゴリ: ${category}
