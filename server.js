@@ -33,21 +33,22 @@ const departments = {
 // 嘆願をAIが仕分け→メール送信
 app.post("/petition", async (req, res) => {
   try {
-    const { title, city, content, email, name } = req.body;
+    const { title, city, content, email, name, genre } = req.body;
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
     
     const prompt = `
                   以下の市民からの嘆願を分析してください。
-
                   タイトル: ${title}
+                  ジャンル（ユーザー選択）: ${genre || "未選択"}
                   内容: ${content}
 
                   以下のJSON形式のみで返答してください（他のテキストは不要）:
                   {
                     "category": "道路・交通 or 公園・緑地 or まちづくり・都市計画 or 福祉・介護 or 子育て・保育 or 教育・学校 or 環境・ごみ or 防災・安全 or 国際・多文化共生 or 住宅・建築 or 税金・手続き or その他",
+                    "summary": "内容を100文字以内で要約",
                     "isInappropriate": true or false,
-                    "reason": "不適切な場合の理由、適切な場合は空文字"
+                    "reason": "スパム・誹謗中傷・無関係な内容の場合その理由、適切な場合は空文字"  
                   }
                   `;
 
@@ -65,6 +66,7 @@ app.post("/petition", async (req, res) => {
       subject: `【嘆願】${title}`,
       text: `
             カテゴリ: ${category}
+            要約: ${analysis.summary}
             お名前: ${name || "匿名"}
             メールアドレス: ${email}
             お住まい: ${city}
